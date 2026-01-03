@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CA Final Tracker - License Generator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --gray: #95a5a6;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            max-width: 900px;
+            width: 100%;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+        }
+        
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--gray);
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .tab:hover {
+            background: white;
+        }
+        
+        .tab.active {
+            border-bottom-color: var(--secondary);
+            background: white;
+            color: var(--primary);
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--secondary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 14px 28px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+        }
+        
+        .output {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .output.show {
+            display: block;
+            animation: slideUp 0.3s ease;
+        }
+        
+        .license-key {
+            font-family: monospace;
+            font-size: 18px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            word-break: break-all;
+            border: 2px dashed var(--secondary);
+        }
+        
+        .whatsapp-msg {
+            background: #25D366;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            line-height: 1.6;
+        }
+        
+        .revenue-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--secondary);
+            margin-bottom: 10px;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .license-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .license-table th,
+        .license-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .license-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .license-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .status-active {
+            background: rgba(46, 204, 113, 0.1);
+            color: var(--success);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-expired {
+            background: rgba(231, 76, 60, 0.1);
+            color: var(--accent);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .search-box {
+            margin-bottom: 20px;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                padding: 20px;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab {
+                padding: 12px;
+            }
+            
+            .revenue-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .license-table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>CA Final Tracker License Generator</h1>
+            <p>Generate and manage license keys for your customers</p>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="single">Single License</div>
+            <div class="tab" data-tab="bulk">Bulk Generate</div>
+            <div class="tab" data-tab="tracking">License Tracking</div>
+        </div>
+        
+        <div class="content">
+            <!-- Single License Tab -->
+            <div id="single-tab" class="tab-content active">
+                <div class="form-group">
+                    <label>Customer Name</label>
+                    <input type="text" id="customer-name" placeholder="Enter customer full name">
+                </div>
+                
+                <div class="form-group">
+                    <label>WhatsApp Number</label>
+                    <input type="tel" id="whatsapp-number" placeholder="91XXXXXXXXXX">
+                </div>
+                
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="customer-email" placeholder="customer@example.com">
+                </div>
+                
+                <div class="form-group">
+                    <label>License Type</label>
+                    <select id="license-type">
+                        <option value="basic">Basic (₹499/year)</option>
+                        <option value="premium">Premium (₹799/year)</option>
+                        <option value="demo">Demo (10 days)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Validity</label>
+                    <select id="validity">
+                        <option value="365">1 Year (365 days)</option>
+                        <option value="730">2 Years (730 days)</option>
+                        <option value="1095">3 Years (1095 days)</option>
+                        <option value="10">10 Days (Demo)</option>
+                    </select>
+                </div>
+                
+                <button class="btn" onclick="generateLicense()">
+                    <i class="fas fa-key"></i> Generate License Key
+                </button>
+                
+                <div id="output" class="output">
+                    <h3 style="color: var(--success); margin-bottom: 20px;">
+                        <i class="fas fa-check-circle"></i> License Generated Successfully!
+                    </h3>
+                    
+                    <div class="form-group">
+                        <label>License Key:</label>
+                        <div class="license-key" id="generated-key">CA2024-XXXX-XXXX-XXXX</div>
+                        <button class="btn btn-secondary" onclick="copyToClipboard('generated-key')">
+                            <i class="fas fa-copy"></i> Copy License Key
+                        </button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>WhatsApp Message Template:</label>
+                        <div class="whatsapp-msg" id="whatsapp-template">
+                            Hello [Name], your CA Final Tracker license: [KEY]
+                        </div>
+                        <button class="btn btn-secondary" onclick="copyToClipboard('whatsapp-template')">
+                            <i class="fas fa-copy"></i> Copy WhatsApp Message
+                        </button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Send via WhatsApp:</label>
+                        <a href="#" id="whatsapp-link" target="_blank" class="btn" style="background: #25D366;">
+                            <i class="fab fa-whatsapp"></i> Send via WhatsApp
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Bulk Generate Tab -->
+            <div id="bulk-tab" class="tab-content">
+                <div class="form-group">
+                    <label>Upload CSV File</label>
+                    <input type="file" id="csv-file" accept=".csv">
+                    <p style="margin-top: 10px; font-size: 14px; color: #666;">
+                        CSV format: Name, WhatsApp, Email, Type, Validity
+                    </p>
+                </div>
+                
+                <div class="form-group">
+                    <label>Or Enter Manually (one per line):</label>
+                    <textarea id="bulk-input" rows="10" placeholder="Name,WhatsApp,Email,Type,Validity
+Rohan Sharma,919876543210,rohan@email.com,basic,365
+Priya Patel,919876543211,priya@email.com,premium,730
+Amit Kumar,919876543212,amit@email.com,demo,10"></textarea>
+                </div>
+                
+                <button class="btn" onclick="generateBulkLicenses()">
+                    <i class="fas fa-key"></i> Generate Bulk Licenses
+                </button>
+                
+                <div id="bulk-output" class="output"></div>
+            </div>
+            
+            <!-- Tracking Tab -->
+            <div id="tracking-tab" class="tab-content">
+                <div class="search-box">
+                    <input type="text" id="search-license" placeholder="Search by name, email, or license key...">
+                </div>
+                
+                <div class="revenue-stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-licenses">0</div>
+                        <div class="stat-label">Total Licenses</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="active-licenses">0</div>
+                        <div class="stat-label">Active Licenses</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">₹<span id="total-revenue">0</span></div>
+                        <div class="stat-label">Total Revenue</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">₹<span id="monthly-revenue">0</span></div>
+                        <div class="stat-label">This Month</div>
+                    </div>
+                </div>
+                
+                <table class="license-table" id="license-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Name</th>
+                            <th>WhatsApp</th>
+                            <th>Type</th>
+                            <th>License Key</th>
+                            <th>Expiry</th>
+                            <th>Status</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody id="license-table-body">
+                        <!-- License data will be populated here -->
+                    </tbody>
+                </table>
+                
+                <div class="form-group" style="margin-top: 30px;">
+                    <button class="btn btn-success" onclick="exportToCSV()">
+                        <i class="fas fa-download"></i> Export to CSV
+                    </button>
+                    <button class="btn btn-secondary" onclick="clearAllData()" style="margin-top: 10px;">
+                        <i class="fas fa-trash"></i> Clear All Data
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Secret key for license generation (change this in production)
+        const SECRET_KEY = 'CA_FINAL_TRACKER_2024_SECURE_KEY_' + Math.random().toString(36).substr(2, 20);
+        
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tab switching
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    
+                    document.getElementById(tab.dataset.tab + '-tab').classList.add('active');
+                });
+            });
+            
+            // Load tracking data
+            loadTrackingData();
+            
+            // Search functionality
+            document.getElementById('search-license')?.addEventListener('input', function() {
+                filterLicenses(this.value);
+            });
+            
+            // CSV file upload
+            document.getElementById('csv-file')?.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        document.getElementById('bulk-input').value = event.target.result;
+                    };
+                    reader.readAsText(file);
+                }
+            });
+            
+            // Initialize revenue stats
+            updateRevenueStats();
+        });
+        
+        // Generate single license
+        function generateLicense() {
+            const name = document.getElementById('customer-name').value.trim();
+            const whatsapp = document.getElementById('whatsapp-number').value.trim();
+            const email = document.getElementById('customer-email').value.trim();
+            const type = document.getElementById('license-type').value;
+            const validity = parseInt(document.getElementById('validity').value);
+            
+            if (!name || !whatsapp) {
+                alert('Please enter customer name and WhatsApp number');
+                return;
+            }
+            
+            // Generate license ID
+            const licenseId = 'CA' + Date.now().toString(36).toUpperCase();
+            
+            // Calculate expiry date
+            const issued = new Date();
+            const expiry = new Date(issued.getTime() + validity * 24 * 60 * 60 * 1000);
+            
+            // Create license data
+            const licenseData = {
+                id: licenseId,
+                name: name,
+                whatsapp: whatsapp,
+                email: email,
+                type: type,
+                validity: validity,
+                issued: issued.toISOString(),
+                expires: expiry.toISOString(),
+                maxDevices: type === 'premium' ? 3 : type === 'basic' ? 2 : 1,
+                features: getFeatures(type)
+            };
+            
+            // Encrypt the data (simple base64 encoding for demo)
+            const encryptedData = btoa(JSON.stringify(licenseData));
+            const licenseKey = 'CA2024-' + simpleEncrypt(encryptedData, SECRET_KEY);
+            
+            // Update UI
+            document.getElementById('generated-key').textContent = licenseKey;
+            
+            // Create WhatsApp message
+            const whatsappMsg = `Hello ${name},
+
+🎉 Your CA Final Tracker License Key:
+
+${licenseKey}
+
+📱 Valid for: ${validity} days
+💻 Devices: ${licenseData.maxDevices}
+📧 Support: WhatsApp +91 9142300129
+
+Activation Steps:
+1. Open CA Final Tracker
+2. Click "Already Have License?"
+3. Enter the key above
+4. Start studying!
+
+Thank you for your purchase!`;
+            
+            document.getElementById('whatsapp-template').textContent = whatsappMsg;
+            
+            // Create WhatsApp link
+            const encodedMsg = encodeURIComponent(whatsappMsg);
+            document.getElementById('whatsapp-link').href = 
+                `https://wa.me/${whatsapp}?text=${encodedMsg}`;
+            
+            // Show output
+            document.getElementById('output').classList.add('show');
+            
+            // Save to tracking
+            saveToTracking(licenseData, licenseKey);
+            
+            // Log to console for records
+            console.log('=== LICENSE GENERATED ===');
+            console.log('Customer:', name);
+            console.log('WhatsApp:', whatsapp);
+            console.log('Email:', email);
+            console.log('Type:', type);
+            console.log('Validity:', validity, 'days');
+            console.log('License:', licenseKey);
+            console.log('========================');
+            
+            // Reset form
+            document.getElementById('customer-name').value = '';
+            document.getElementById('whatsapp-number').value = '';
+            document.getElementById('customer-email').value = '';
+        }
+        
+        // Simple encryption function
+        function simpleEncrypt(text, key) {
+            let result = '';
+            for (let i = 0; i < text.length; i++) {
+                result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+            }
+            return btoa(result).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+        }
+        
+        // Get features for license type
+        function getFeatures(type) {
+            const features = {
+                basic: ['All Subjects', 'Progress Tracking', 'Export Data', '2 Devices'],
+                premium: ['All Basic Features', 'Auto Sync', 'Cloud Backup', '3 Devices', 'Priority Support'],
+                demo: ['2 Subjects', '50 Topics', '10 Days', 'No Export', '1 Device']
+            };
+            return features[type] || features.basic;
+        }
+        
+        // Save license to tracking
+        function saveToTracking(licenseData, licenseKey) {
+            const trackingData = {
+                date: new Date().toLocaleDateString(),
+                time: new Date().toLocaleTimeString(),
+                name: licenseData.name,
+                whatsapp: licenseData.whatsapp,
+                email: licenseData.email,
+                type: licenseData.type,
+                validity: licenseData.validity,
+                licenseKey: licenseKey,
+                issued: licenseData.issued,
+                expires: licenseData.expires,
+                revenue: calculateRevenue(licenseData.type)
+            };
+            
+            // Save to localStorage
+            const existing = JSON.parse(localStorage.getItem('licenseTracking') || '[]');
+            existing.push(trackingData);
+            localStorage.setItem('licenseTracking', JSON.stringify(existing));
+            
+            // Update tracking display
+            updateTrackingStats();
+            loadTrackingData();
+        }
+        
+        // Calculate revenue
+        function calculateRevenue(type) {
+            const prices = {
+                basic: 499,
+                premium: 799,
+                demo: 0
+            };
+            return prices[type] || 0;
+        }
+        
+        // Load tracking data
+        function loadTrackingData() {
+            const tracking = JSON.parse(localStorage.getItem('licenseTracking') || '[]');
+            const tbody = document.getElementById('license-table-body');
+            
+            if (!tbody) return;
+            
+            if (tracking.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px; color: var(--gray);">No license data found</td></tr>';
+                return;
+            }
+            
+            let html = '';
+            tracking.forEach(license => {
+                const expiryDate = new Date(license.expires);
+                const now = new Date();
+                const isExpired = expiryDate < now;
+                
+                html += `
+                <tr>
+                    <td>${license.date}<br><small>${license.time}</small></td>
+                    <td>${license.name}</td>
+                    <td>${license.whatsapp}</td>
+                    <td>${license.type.toUpperCase()}</td>
+                    <td><code>${license.licenseKey.substring(0, 15)}...</code></td>
+                    <td>${new Date(license.expires).toLocaleDateString()}</td>
+                    <td><span class="${isExpired ? 'status-expired' : 'status-active'}">${isExpired ? 'Expired' : 'Active'}</span></td>
+                    <td>₹${license.revenue}</td>
+                </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+        }
+        
+        // Filter licenses
+        function filterLicenses(searchTerm) {
+            const tracking = JSON.parse(localStorage.getItem('licenseTracking') || '[]');
+            const tbody = document.getElementById('license-table-body');
+            
+            if (!tbody) return;
+            
+            const filtered = tracking.filter(license => 
+                license.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                license.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                license.whatsapp.includes(searchTerm) ||
+                license.licenseKey.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+            
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px; color: var(--gray);">No matching licenses found</td></tr>';
+                return;
+            }
+            
+            let html = '';
+            filtered.forEach(license => {
+                const expiryDate = new Date(license.expires);
+                const now = new Date();
+                const isExpired = expiryDate < now;
+                
+                html += `
+                <tr>
+                    <td>${license.date}<br><small>${license.time}</small></td>
+                    <td>${license.name}</td>
+                    <td>${license.whatsapp}</td>
+                    <td>${license.type.toUpperCase()}</td>
+                    <td><code>${license.licenseKey.substring(0, 15)}...</code></td>
+                    <td>${new Date(license.expires).toLocaleDateString()}</td>
+                    <td><span class="${isExpired ? 'status-expired' : 'status-active'}">${isExpired ? 'Expired' : 'Active'}</span></td>
+                    <td>₹${license.revenue}</td>
+                </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+        }
+        
+        // Update tracking stats
+        function updateTrackingStats() {
+            const tracking = JSON.parse(localStorage.getItem('licenseTracking') || '[]');
+            const total = tracking.length;
+            
+            // Count active licenses
+            const now = new Date();
+            const active = tracking.filter(license => {
+                const expiryDate = new Date(license.expires);
+                return expiryDate > now;
+            }).length;
+            
+            // Calculate revenue
+            const totalRevenue = tracking.reduce((sum, license) => sum + (license.revenue || 0), 0);
+            
+            // Calculate monthly revenue (current month)
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            const monthlyRevenue = tracking.reduce((sum, license) => {
+                const licenseDate = new Date(license.issued);
+                if (licenseDate.getMonth() === currentMonth && licenseDate.getFullYear() === currentYear) {
+                    return sum + (license.revenue || 0);
+                }
+                return sum;
+            }, 0);
+            
+            // Update UI
+            document.getElementById('total-licenses').textContent = total;
+            document.getElementById('active-licenses').textContent = active;
+            document.getElementById('total-revenue').textContent = totalRevenue;
+            document.getElementById('monthly-revenue').textContent = monthlyRevenue;
+        }
+        
+        // Generate bulk licenses
+        function generateBulkLicenses() {
+            const input = document.getElementById('bulk-input').value.trim();
+            if (!input) {
+                alert('Please enter CSV data or upload a CSV file');
+                return;
+            }
+            
+            const lines = input.split('\n').filter(line => line.trim());
+            const headers = lines[0].split(',').map(h => h.trim());
+            const data = lines.slice(1);
+            
+            let results = '<h3>Bulk License Generation Results</h3>';
+            let successful = 0;
+            let failed = 0;
+            
+            data.forEach((line, index) => {
+                const values = line.split(',').map(v => v.trim());
+                if (values.length >= 5) {
+                    const name = values[0];
+                    const whatsapp = values[1];
+                    const email = values[2];
+                    const type = values[3];
+                    const validity = parseInt(values[4]);
+                    
+                    // Generate license
+                    const licenseId = 'CA' + (Date.now() + index).toString(36).toUpperCase();
+                    const issued = new Date();
+                    const expiry = new Date(issued.getTime() + validity * 24 * 60 * 60 * 1000);
+                    
+                    const licenseData = {
+                        id: licenseId,
+                        name: name,
+                        whatsapp: whatsapp,
+                        email: email,
+                        type: type,
+                        validity: validity,
+                        issued: issued.toISOString(),
+                        expires: expiry.toISOString(),
+                        maxDevices: type === 'premium' ? 3 : type === 'basic' ? 2 : 1
+                    };
+                    
+                    const encryptedData = btoa(JSON.stringify(licenseData));
+                    const licenseKey = 'CA2024-' + simpleEncrypt(encryptedData, SECRET_KEY);
+                    
+                    // Save to tracking
+                    const trackingData = {
+                        date: issued.toLocaleDateString(),
+                        time: issued.toLocaleTimeString(),
+                        name: name,
+                        whatsapp: whatsapp,
+                        email: email,
+                        type: type,
+                        validity: validity,
+                        licenseKey: licenseKey,
+                        issued: licenseData.issued,
+                        expires: licenseData.expires,
+                        revenue: calculateRevenue(type)
+                    };
+                    
+                    const existing = JSON.parse(localStorage.getItem('licenseTracking') || '[]');
+                    existing.push(trackingData);
+                    localStorage.setItem('licenseTracking', JSON.stringify(existing));
+                    
+                    results += `
+                    <div style="margin-bottom: 15px; padding: 15px; background: white; border-radius: 8px; border: 1px solid #eee;">
+                        <strong>${name}</strong>: ${licenseKey}<br>
+                        <small>WhatsApp: ${whatsapp} | Type: ${type} | Validity: ${validity} days</small>
+                    </div>
+                    `;
+                    successful++;
+                } else {
+                    results += `
+                    <div style="margin-bottom: 15px; padding: 15px; background: #ffeaa7; border-radius: 8px; border: 1px solid #fdcb6e;">
+                        <strong>Line ${index + 2}:</strong> Invalid format - ${line}
+                    </div>
+                    `;
+                    failed++;
+                }
+            });
+            
+            results += `<div style="margin-top: 20px; padding: 15px; background: ${successful > 0 ? '#d1f7c4' : '#ffb8b8'}; border-radius: 8px;">
+                <strong>Summary:</strong> ${successful} licenses generated, ${failed} failed
+            </div>`;
+            
+            document.getElementById('bulk-output').innerHTML = results;
+            document.getElementById('bulk-output').classList.add('show');
+            
+            // Update stats
+            updateTrackingStats();
+            loadTrackingData();
+        }
+        
+        // Export to CSV
+        function exportToCSV() {
+            const tracking = JSON.parse(localStorage.getItem('licenseTracking') || '[]');
+            
+            if (tracking.length === 0) {
+                alert('No data to export');
+                return;
+            }
+            
+            // Define headers
+            const headers = ['Date', 'Time', 'Name', 'WhatsApp', 'Email', 'Type', 'License Key', 'Issued', 'Expires', 'Revenue', 'Status'];
+            
+            // Convert data to CSV
+            let csv = headers.join(',') + '\n';
+            
+            tracking.forEach(license => {
+                const expiryDate = new Date(license.expires);
+                const now = new Date();
+                const status = expiryDate < now ? 'Expired' : 'Active';
+                
+                const row = [
+                    license.date,
+                    license.time,
+                    `"${license.name}"`,
+                    license.whatsapp,
+                    license.email,
+                    license.type,
+                    license.licenseKey,
+                    license.issued,
+                    license.expires,
+                    license.revenue,
+                    status
+                ];
+                
+                csv += row.join(',') + '\n';
+            });
+            
+            // Create download link
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `ca-tracker-licenses-${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // Clear all data
+        function clearAllData() {
+            if (confirm('Are you sure you want to clear ALL license data? This cannot be undone.')) {
+                localStorage.removeItem('licenseTracking');
+                loadTrackingData();
+                updateTrackingStats();
+                alert('All license data has been cleared.');
+            }
+        }
+        
+        // Copy to clipboard
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent || element.value;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Copied to clipboard!');
+            }).catch(err => {
+                console.error('Copy failed:', err);
+                alert('Failed to copy to clipboard');
+            });
+        }
+        
+        // Initialize revenue stats
+        updateRevenueStats();
+        
+        function updateRevenueStats() {
+            updateTrackingStats();
+        }
+    </script>
+</body>
+  </html>
