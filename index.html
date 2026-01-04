@@ -270,6 +270,126 @@
             font-size: 14px;
             color: var(--gray);
         }
+        /* License Status Indicator */
+.license-status-indicator {
+    margin: 15px 0;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: slideIn 0.3s ease;
+}
+
+.license-status-indicator.success {
+    background: rgba(46, 204, 113, 0.1);
+    color: #27ae60;
+    border: 1px solid rgba(46, 204, 113, 0.2);
+}
+
+.license-status-indicator.error {
+    background: rgba(231, 76, 60, 0.1);
+    color: #c0392b;
+    border: 1px solid rgba(231, 76, 60, 0.2);
+}
+
+.license-status-indicator.warning {
+    background: rgba(241, 196, 15, 0.1);
+    color: #f39c12;
+    border: 1px solid rgba(241, 196, 15, 0.2);
+}
+
+.license-status-indicator.info {
+    background: rgba(52, 152, 219, 0.1);
+    color: #2980b9;
+    border: 1px solid rgba(52, 152, 219, 0.2);
+}
+
+.license-status-indicator i {
+    font-size: 16px;
+}
+
+/* License Input Group */
+.license-input-group {
+    position: relative;
+    display: flex;
+    gap: 10px;
+}
+
+.license-input-group input {
+    flex: 1;
+    padding-right: 50px;
+}
+
+.license-scan-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--secondary);
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+}
+
+.license-scan-btn:hover {
+    background: var(--primary);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.license-format-hint {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--gray);
+    text-align: center;
+}
+
+/* WhatsApp Support Button */
+.whatsapp-support-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 25px;
+    background: #25D366;
+    color: white;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s;
+    margin: 15px 0;
+}
+
+.whatsapp-support-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 30px rgba(37, 211, 102, 0.3);
+}
+
+/* Demo Video Link */
+.demo-video-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 25px;
+    background: #FF0000;
+    color: white;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.demo-video-link:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 30px rgba(255, 0, 0, 0.3);
+}
         
         /* App Container */
         .app-container {
@@ -4926,5 +5046,6 @@ function setupLicenseScanning() {
     </script>
 </body>
 </html>
+
 
 
