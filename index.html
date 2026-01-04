@@ -3491,7 +3491,7 @@ class EnhancedLicenseSystem {
                 return;
             }
             
-            const validation = LicenseSystem.validateLicense(licenseData.key);
+            const validation = EnhancedLicenseSystem.validateLicense(licenseData.key);
             
             if (!validation.valid) {
                 // Invalid or expired license
@@ -5046,6 +5046,7 @@ function setupLicenseScanning() {
     </script>
 </body>
 </html>
+
 
 
 
