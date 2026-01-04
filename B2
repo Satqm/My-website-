@@ -1,0 +1,879 @@
+<script>
+// ENHANCED LICENSE SYSTEM
+// ====================
+const MASTER_KEY = "S@tyamCA2026@Premium";
+const BACKUP_KEY = "RadhaKrishna@2026";
+
+class EnhancedLicenseSystem {
+    static generateLicense(name, days = 365, type = "premium") {
+        const expiryDate = new Date();
+        expiryDate.setDate(expiryDate.getDate() + parseInt(days));
+        
+        const licenseData = {
+            name: name.trim().toUpperCase(),
+            expiry: expiryDate.toISOString(),
+            generated: new Date().toISOString(),
+            type: type,
+            version: "4.0",
+            deviceId: this.generateDeviceId()
+        };
+        
+        const jsonString = JSON.stringify(licenseData);
+        
+        // Double encryption for security
+        const encrypted1 = CryptoJS.AES.encrypt(jsonString, MASTER_KEY).toString();
+        const encrypted2 = CryptoJS.AES.encrypt(encrypted1, BACKUP_KEY).toString();
+        const base64 = btoa(encrypted2);
+        
+        return `CA-PRO-${type.toUpperCase()}-${base64}`;
+    }
+    
+    static validateLicense(licenseKey) {
+        try {
+            // Validate format
+            if (!licenseKey.startsWith('CA-PRO-')) {
+                return { 
+                    valid: false, 
+                    error: 'Invalid format. Must start with CA-PRO-',
+                    code: 'FORMAT_ERROR'
+                };
+            }
+            
+            // Extract parts
+            const parts = licenseKey.split('-');
+            if (parts.length < 4) {
+                return { 
+                    valid: false, 
+                    error: 'Invalid license structure',
+                    code: 'STRUCTURE_ERROR'
+                };
+            }
+            
+            const licenseType = parts[2];
+            const base64 = parts.slice(3).join('-');
+            
+            // Decrypt
+            const encrypted2 = atob(base64);
+            const encrypted1 = CryptoJS.AES.decrypt(encrypted2, BACKUP_KEY);
+            const intermediate = encrypted1.toString(CryptoJS.enc.Utf8);
+            
+            if (!intermediate) {
+                return { 
+                    valid: false, 
+                    error: 'Invalid license key',
+                    code: 'DECRYPT_ERROR'
+                };
+            }
+            
+            const decrypted = CryptoJS.AES.decrypt(intermediate, MASTER_KEY);
+            const jsonString = decrypted.toString(CryptoJS.enc.Utf8);
+            
+            if (!jsonString) {
+                return { 
+                    valid: false, 
+                    error: 'Invalid license data',
+                    code: 'DATA_ERROR'
+                };
+            }
+            
+            const licenseData = JSON.parse(jsonString);
+            
+            // Check if license is for current device (allow empty deviceId from generator)
+            if (licenseData.deviceId && licenseData.deviceId !== this.getDeviceId()) {
+                return { 
+                    valid: false, 
+                    error: 'License is registered to another device',
+                    code: 'DEVICE_MISMATCH',
+                    data: licenseData
+                };
+            }
+            
+            const expiryDate = new Date(licenseData.expiry);
+            const currentDate = new Date();
+            
+            // Check expiry
+            if (expiryDate < currentDate) {
+                return { 
+                    valid: false, 
+                    error: 'License has expired',
+                    code: 'EXPIRED',
+                    data: licenseData,
+                    expiry: expiryDate
+                };
+            }
+            
+            // Calculate days remaining
+            const daysRemaining = Math.ceil((expiryDate - currentDate) / (1000 * 60 * 60 * 24));
+            
+            return {
+                valid: true,
+                data: licenseData,
+                expiry: expiryDate,
+                daysRemaining: daysRemaining,
+                type: licenseType
+            };
+            
+        } catch (error) {
+            console.error('License validation error:', error);
+            return { 
+                valid: false, 
+                error: 'Invalid license key format',
+                code: 'VALIDATION_ERROR'
+            };
+        }
+    }
+    
+    static generateDeviceId() {
+        // Generate a unique device ID based on browser fingerprint
+        const fingerprint = [
+            navigator.userAgent,
+            navigator.platform,
+            screen.width,
+            screen.height,
+            screen.colorDepth,
+            new Date().getTimezoneOffset()
+        ].join('|');
+        
+        return CryptoJS.MD5(fingerprint).toString();
+    }
+    
+    static getDeviceId() {
+        let deviceId = localStorage.getItem('ca_pro_device_id');
+        if (!deviceId) {
+            deviceId = this.generateDeviceId();
+            localStorage.setItem('ca_pro_device_id', deviceId);
+        }
+        return deviceId;
+    }
+    
+    static getLicenseStatus() {
+        const licenseData = DataStorage.load('license');
+        if (!licenseData) return { status: 'inactive' };
+        
+        const validation = this.validateLicense(licenseData.key);
+        
+        if (validation.valid) {
+            return {
+                status: 'active',
+                type: validation.type,
+                expiry: validation.expiry,
+                daysRemaining: validation.daysRemaining,
+                name: validation.data.name
+            };
+        } else {
+            return {
+                status: 'expired',
+                error: validation.error,
+                expiry: validation.expiry
+            };
+        }
+    }
+}
+
+// ====================
+// DATA STORAGE SYSTEM
+// ====================
+class DataStorage {
+    static save(key, data) {
+        localStorage.setItem(`ca_pro_${key}`, JSON.stringify(data));
+    }
+    
+    static load(key) {
+        const data = localStorage.getItem(`ca_pro_${key}`);
+        return data ? JSON.parse(data) : null;
+    }
+    
+    static clear() {
+        // Keep license and user info
+        const license = this.load('license');
+        const user = this.load('user');
+        localStorage.clear();
+        
+        if (license) this.save('license', license);
+        if (user) this.save('user', user);
+    }
+    
+    static exportAll() {
+        const allData = {
+            user: this.load('user'),
+            progress: this.load('progress'),
+            targets: this.load('targets'),
+            completedTargets: this.load('completedTargets'),
+            studyPlan: this.load('studyPlan'),
+            videos: this.load('videos'),
+            resources: this.load('resources'),
+            stats: this.load('stats'),
+            exportDate: new Date().toISOString(),
+            version: '4.0'
+        };
+        
+        return JSON.stringify(allData, null, 2);
+    }
+    
+    static importAll(jsonData) {
+        try {
+            const data = JSON.parse(jsonData);
+            
+            if (!data.version) {
+                return { success: false, error: 'Invalid backup file format' };
+            }
+            
+            // Save all data
+            Object.keys(data).forEach(key => {
+                if (key !== 'exportDate' && key !== 'version') {
+                    this.save(key, data[key]);
+                }
+            });
+            
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: 'Invalid backup file' };
+        }
+    }
+}
+
+// ====================
+// GLOBAL VARIABLES
+// ====================
+let currentUser = null;
+let userProgress = {};
+let userTargets = [];
+let completedTargets = [];
+let userStudyPlan = {};
+let userVideos = [];
+let userResources = [];
+let userStats = {};
+let progressChart = null;
+let currentChartType = 'subject';
+let currentSubjectFilter = 'all';
+let notificationTimer = null;
+
+// CA Syllabus Data (Keep your existing syllabusData object)
+const syllabusData = {
+    paper1: {
+        name: "Paper 1: Financial Reporting (FR)",
+        weightage: 26,
+        topics: [
+            {
+                name: "Introduction to GPFS",
+                weightage: 12.5,
+                priority: "B",
+                subtopics: [
+                    { name: "Ind AS 1 basics", weight: 40 },
+                    { name: "Schedule III Div II", weight: 20 },
+                    { name: "Applicability criteria", weight: 20 }
+                ]
+            },
+            // ... rest of your syllabus data
+        ]
+    },
+    // ... rest of your subjects
+};
+
+// ====================
+// DOM ELEMENTS
+// ====================
+const licenseContainer = document.getElementById('license-container');
+const appContainer = document.getElementById('app-container');
+const activateBtn = document.getElementById('activate-btn');
+const licenseKeyInput = document.getElementById('license-key');
+
+// ====================
+// INITIALIZATION
+// ====================
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, initializing app...');
+    
+    // Set today's date in inputs
+    const today = new Date().toISOString().split('T')[0];
+    if (document.getElementById('start-date')) {
+        document.getElementById('start-date').value = today;
+    }
+    if (document.getElementById('target-date')) {
+        document.getElementById('target-date').value = today;
+    }
+    
+    // Setup license scanning
+    setupLicenseScanning();
+    
+    // Check for valid license
+    checkLicense();
+    
+    // Add Enter key listener for license input
+    licenseKeyInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            activateLicense();
+        }
+    });
+});
+
+// ====================
+// LICENSE FUNCTIONS
+// ====================
+function checkLicense() {
+    console.log('Checking license...');
+    const licenseData = DataStorage.load('license');
+    
+    if (!licenseData) {
+        console.log('No license found, showing license screen');
+        licenseContainer.style.display = 'flex';
+        appContainer.style.display = 'none';
+        return;
+    }
+    
+    const validation = EnhancedLicenseSystem.validateLicense(licenseData.key);
+    console.log('License validation result:', validation);
+    
+    if (!validation.valid) {
+        // Invalid or expired license
+        console.log('License invalid:', validation.error);
+        licenseContainer.style.display = 'flex';
+        appContainer.style.display = 'none';
+        licenseKeyInput.value = licenseData.key;
+        showLicenseMessage('License expired or invalid. Please renew.', 'error');
+        return;
+    }
+    
+    // Valid license
+    console.log('License valid, loading app...');
+    currentUser = validation.data;
+    licenseContainer.style.display = 'none';
+    appContainer.style.display = 'block';
+    appContainer.classList.add('active');
+    
+    // Initialize app
+    setupEventListeners();
+    loadUserData();
+    setupNotifications();
+    updateLicenseStatusUI();
+}
+
+function setupLicenseScanning() {
+    const scanBtn = document.getElementById('scan-license-btn');
+    if (scanBtn) {
+        scanBtn.addEventListener('click', function() {
+            // Create file input for image scanning
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'image/*';
+            fileInput.style.display = 'none';
+            
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                showLicenseMessage('Scanning image for license key...', 'info');
+                
+                // For demo purposes, we'll just show a message
+                setTimeout(() => {
+                    showLicenseMessage('Scan feature requires OCR library. Please type manually.', 'warning');
+                }, 1500);
+            });
+            
+            document.body.appendChild(fileInput);
+            fileInput.click();
+            document.body.removeChild(fileInput);
+        });
+    }
+}
+
+async function activateLicense() {
+    console.log('Activating license...');
+    const licenseKey = licenseKeyInput.value.trim();
+    
+    if (!licenseKey) {
+        showLicenseMessage('Please enter a license key', 'error');
+        return;
+    }
+    
+    // Show loading state
+    const activateBtn = document.getElementById('activate-btn');
+    const originalText = activateBtn.innerHTML;
+    const originalWidth = activateBtn.style.width;
+    
+    activateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Validating...';
+    activateBtn.disabled = true;
+    activateBtn.style.width = activateBtn.offsetWidth + 'px';
+    
+    try {
+        // First, check if the license has the correct format
+        if (!licenseKey.startsWith('CA-PRO-')) {
+            showLicenseMessage('Invalid format. Must start with CA-PRO-', 'error');
+            
+            // Try to fix common format issues
+            if (licenseKey.startsWith('CA-PREM-')) {
+                const fixedKey = licenseKey.replace('CA-PREM-', 'CA-PRO-PREMIUM-');
+                showLicenseMessage(`Did you mean: ${fixedKey.substring(0, 30)}...?`, 'warning');
+                licenseKeyInput.value = fixedKey;
+            }
+            
+            return;
+        }
+        
+        // Split the license key to validate structure
+        const parts = licenseKey.split('-');
+        if (parts.length < 4) {
+            showLicenseMessage('Invalid license structure. Expected: CA-PRO-TIER-ENCRYPTED_CODE', 'error');
+            return;
+        }
+        
+        const validation = EnhancedLicenseSystem.validateLicense(licenseKey);
+        console.log('Validation result:', validation);
+        
+        if (!validation.valid) {
+            // Show specific error message
+            let errorMessage = validation.error;
+            let errorType = 'error';
+            
+            switch(validation.code) {
+                case 'EXPIRED':
+                    errorMessage = `License expired on ${new Date(validation.expiry).toLocaleDateString()}. Please renew.`;
+                    errorType = 'warning';
+                    break;
+                case 'DEVICE_MISMATCH':
+                    errorMessage = 'This license is registered to another device. Please contact support.';
+                    errorType = 'warning';
+                    break;
+                case 'FORMAT_ERROR':
+                    errorMessage = 'Invalid license format. Should be: CA-PRO-PREMIUM-XXXXXX';
+                    break;
+                case 'DECRYPT_ERROR':
+                    errorMessage = 'Invalid license key. Check for typos.';
+                    break;
+            }
+            
+            showLicenseMessage(errorMessage, errorType);
+            
+            // Show detailed error in console for debugging
+            console.error('License validation failed:', validation);
+            
+            return;
+        }
+        
+        // Valid license - Save with enhanced data
+        DataStorage.save('license', {
+            key: licenseKey,
+            activated: new Date().toISOString(),
+            validation: validation,
+            deviceId: EnhancedLicenseSystem.getDeviceId(),
+            originalKey: licenseKey
+        });
+        
+        // Set current user
+        currentUser = {
+            name: validation.data.name,
+            initials: validation.data.name.split(' ').map(n => n[0]).join('').toUpperCase(),
+            licenseType: validation.type,
+            expiry: validation.expiry,
+            daysRemaining: validation.daysRemaining,
+            deviceId: validation.data.deviceId
+        };
+        
+        DataStorage.save('user', currentUser);
+        
+        // Show success animation
+        showLicenseMessage(`✅ License activated! Welcome ${currentUser.name}!`, 'success');
+        
+        // Add visual success animation
+        const licenseBox = document.querySelector('.license-box');
+        const originalTransform = licenseBox.style.transform;
+        const originalBoxShadow = licenseBox.style.boxShadow;
+        
+        licenseBox.style.transform = 'scale(1.02)';
+        licenseBox.style.boxShadow = '0 30px 60px rgba(46, 204, 113, 0.3)';
+        
+        // Success confetti effect
+        createConfetti();
+        
+        // Transition to app
+        setTimeout(() => {
+            licenseContainer.style.display = 'none';
+            appContainer.style.display = 'block';
+            appContainer.classList.add('active');
+            
+            setupEventListeners();
+            loadUserData();
+            setupNotifications();
+            updateLicenseStatusUI();
+            
+            // Show welcome toast with license info
+            showToast(`🎉 Welcome ${currentUser.name}! Premium license activated. ${validation.daysRemaining} days remaining.`, 'success');
+            
+            // Reset license box style
+            setTimeout(() => {
+                licenseBox.style.transform = originalTransform;
+                licenseBox.style.boxShadow = originalBoxShadow;
+            }, 1000);
+            
+        }, 1500);
+        
+    } catch (error) {
+        console.error('License activation error:', error);
+        showLicenseMessage(`❌ Activation failed: ${error.message}`, 'error');
+    } finally {
+        // Reset button
+        setTimeout(() => {
+            activateBtn.innerHTML = originalText;
+            activateBtn.disabled = false;
+            activateBtn.style.width = originalWidth;
+        }, 1000);
+    }
+}
+
+function createConfetti() {
+    const confettiCount = 50;
+    const colors = ['#2ecc71', '#3498db', '#e74c3c', '#f1c40f', '#9b59b6'];
+    const container = document.querySelector('.license-container');
+    
+    for (let i = 0; i < confettiCount; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.cssText = `
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: ${colors[Math.floor(Math.random() * colors.length)]};
+            border-radius: 2px;
+            top: -20px;
+            left: ${Math.random() * 100}%;
+            z-index: 1000;
+            opacity: 0.8;
+            transform: rotate(${Math.random() * 360}deg);
+        `;
+        
+        container.appendChild(confetti);
+        
+        // Animate confetti
+        const animation = confetti.animate([
+            { transform: 'translateY(0) rotate(0deg)', opacity: 1 },
+            { transform: `translateY(${window.innerHeight + 100}px) rotate(${Math.random() * 720}deg)`, opacity: 0 }
+        ], {
+            duration: 2000 + Math.random() * 2000,
+            easing: 'cubic-bezier(0.215, 0.610, 0.355, 1)'
+        });
+        
+        animation.onfinish = () => confetti.remove();
+    }
+}
+
+function showLicenseMessage(message, type = 'info') {
+    console.log(`License message [${type}]: ${message}`);
+    
+    // Remove any existing message
+    const existingMessage = document.getElementById('license-message');
+    if (existingMessage) {
+        existingMessage.remove();
+    }
+    
+    // Create new message element
+    const messageEl = document.createElement('div');
+    messageEl.id = 'license-message';
+    messageEl.className = `license-message ${type}`;
+    messageEl.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+        <span>${message}</span>
+    `;
+    
+    // Insert after the activate button
+    const activateBtn = document.getElementById('activate-btn');
+    if (activateBtn && activateBtn.parentNode) {
+        activateBtn.parentNode.insertBefore(messageEl, activateBtn.nextSibling);
+    }
+    
+    // Auto-remove after 5 seconds for success messages
+    if (type === 'success' || type === 'error') {
+        setTimeout(() => {
+            if (messageEl.parentNode) {
+                messageEl.style.opacity = '0';
+                setTimeout(() => {
+                    if (messageEl.parentNode) {
+                        messageEl.parentNode.removeChild(messageEl);
+                    }
+                }, 300);
+            }
+        }, 5000);
+    }
+}
+
+function updateLicenseStatusUI() {
+    const status = EnhancedLicenseSystem.getLicenseStatus();
+    console.log('License status:', status);
+    
+    if (status.status === 'active' && currentUser) {
+        const userNameElement = document.getElementById('user-name');
+        if (userNameElement) {
+            userNameElement.innerHTML = `${currentUser.name} <small style="font-size: 12px; color: var(--gray);">(${status.daysRemaining}d)</small>`;
+        }
+        
+        const userStatusElement = document.querySelector('.user-status');
+        if (userStatusElement) {
+            userStatusElement.textContent = 'Premium Member';
+            userStatusElement.style.color = 'var(--success)';
+        }
+        
+        // Update license status indicator
+        const statusIndicator = document.getElementById('license-status-indicator');
+        if (statusIndicator) {
+            statusIndicator.innerHTML = `
+                <div class="license-status-message">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Premium License Active (${status.daysRemaining} days remaining)</span>
+                </div>
+            `;
+            statusIndicator.className = 'license-status-indicator success';
+            statusIndicator.style.display = 'flex';
+        }
+    }
+}
+
+// ====================
+// APP FUNCTIONS
+// ====================
+function setupEventListeners() {
+    console.log('Setting up event listeners...');
+    
+    // Navigation
+    const navLinks = document.querySelectorAll('.nav-link');
+    const pages = document.querySelectorAll('.page');
+    
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const pageId = link.getAttribute('data-page');
+            
+            navLinks.forEach(l => l.classList.remove('active'));
+            link.classList.add('active');
+            
+            pages.forEach(page => page.classList.remove('active'));
+            document.getElementById(`${pageId}-page`).classList.add('active');
+        });
+    });
+    
+    // User menu
+    const userMenuBtn = document.getElementById('user-menu-btn');
+    const userDropdown = document.getElementById('user-dropdown');
+    
+    if (userMenuBtn && userDropdown) {
+        userMenuBtn.addEventListener('click', () => {
+            userDropdown.classList.toggle('active');
+        });
+    }
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.user-menu') && userDropdown) {
+            userDropdown.classList.remove('active');
+        }
+    });
+}
+
+function loadUserData() {
+    console.log('Loading user data...');
+    
+    const savedUser = DataStorage.load('user');
+    if (savedUser) {
+        currentUser = savedUser;
+    } else {
+        currentUser = {
+            name: "Satyam Kumar",
+            initials: "SK"
+        };
+        DataStorage.save('user', currentUser);
+    }
+    
+    userProgress = DataStorage.load('progress') || initializeProgress();
+    userTargets = DataStorage.load('targets') || [];
+    completedTargets = DataStorage.load('completedTargets') || [];
+    userStudyPlan = DataStorage.load('studyPlan') || initializeStudyPlan();
+    userStats = DataStorage.load('stats') || initializeStats();
+    userVideos = DataStorage.load('videos') || [];
+    userResources = DataStorage.load('resources') || [];
+    
+    updateUserUI();
+    updatePlanDisplay();
+    updateDashboard();
+}
+
+function initializeProgress() {
+    const progress = { subjects: {} };
+    
+    for (const paperId in syllabusData) {
+        progress.subjects[paperId] = {
+            completedTopics: 0,
+            totalTopics: syllabusData[paperId].topics.length,
+            topics: {}
+        };
+        
+        syllabusData[paperId].topics.forEach(topic => {
+            progress.subjects[paperId].topics[topic.name] = {
+                status: 'not-started',
+                subtopics: {}
+            };
+            
+            topic.subtopics.forEach(subtopic => {
+                progress.subjects[paperId].topics[topic.name].subtopics[subtopic.name] = {
+                    actualHours: 0,
+                    completed: false
+                };
+            });
+        });
+    }
+    
+    return progress;
+}
+
+function initializeStudyPlan() {
+    const today = new Date();
+    const examDate = new Date();
+    examDate.setDate(today.getDate() + 180);
+    
+    const plan = {
+        daysToExam: 180,
+        dailyHours: 4,
+        totalHours: 720,
+        startDate: today.toISOString().split('T')[0],
+        examDate: examDate.toISOString().split('T')[0],
+        subjectHours: {},
+        customDistribution: false
+    };
+    
+    for (const subjectId in syllabusData) {
+        const subjectWeight = syllabusData[subjectId].weightage;
+        plan.subjectHours[subjectId] = Math.round((subjectWeight / 100) * 720);
+    }
+    
+    return plan;
+}
+
+function initializeStats() {
+    return {
+        totalStudyDays: 0,
+        currentStreak: 0,
+        bestStreak: 0,
+        totalHoursStudied: 0,
+        totalTargetsSet: 0,
+        totalTargetsAchieved: 0,
+        totalSuccessfulTargets: 0,
+        successRate: 0,
+        lastStudyDate: null,
+        dailyVelocity: 0,
+        last7DaysVelocity: 0
+    };
+}
+
+function updateUserUI() {
+    if (currentUser) {
+        const initials = currentUser.name.split(' ').map(n => n[0]).join('').toUpperCase();
+        const userAvatar = document.getElementById('user-avatar');
+        const userName = document.getElementById('user-name');
+        
+        if (userAvatar) userAvatar.textContent = initials.substring(0, 2);
+        if (userName) userName.textContent = currentUser.name;
+    }
+}
+
+function updatePlanDisplay() {
+    if (userStudyPlan) {
+        const totalDays = document.getElementById('total-days');
+        const totalHours = document.getElementById('total-hours');
+        const dailyTarget = document.getElementById('daily-target');
+        const examDate = document.getElementById('exam-date');
+        
+        if (totalDays) totalDays.textContent = userStudyPlan.daysToExam || 0;
+        if (totalHours) totalHours.textContent = userStudyPlan.totalHours || 0;
+        if (dailyTarget) dailyTarget.textContent = userStudyPlan.dailyHours || 0;
+        if (examDate && userStudyPlan.examDate) {
+            const date = new Date(userStudyPlan.examDate);
+            examDate.textContent = date.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric' 
+            });
+        }
+    }
+}
+
+function updateDashboard() {
+    console.log('Updating dashboard...');
+    calculateKPIs();
+    calculateSmartPace();
+    updateChart();
+}
+
+function calculateKPIs() {
+    console.log('Calculating KPIs...');
+    // Add your KPI calculation logic here
+}
+
+function calculateSmartPace() {
+    console.log('Calculating smart pace...');
+    // Add your pace calculation logic here
+}
+
+function updateChart() {
+    console.log('Updating chart...');
+    // Add your chart update logic here
+}
+
+function setupNotifications() {
+    console.log('Setting up notifications...');
+    // Add your notification logic here
+}
+
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    const toastTitle = document.getElementById('toast-title');
+    const toastMessage = document.getElementById('toast-message');
+    const toastIcon = toast.querySelector('i');
+    
+    if (!toast || !toastTitle || !toastMessage) return;
+    
+    toastTitle.textContent = type === 'success' ? 'Success!' : 'Error!';
+    toastMessage.textContent = message;
+    
+    toast.className = `toast ${type}`;
+    toastIcon.className = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
+    
+    toast.classList.add('show');
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+
+// ====================
+// DEBUG HELPER
+// ====================
+function debugLicense() {
+    const licenseKey = licenseKeyInput.value.trim();
+    console.log('Debugging license:', licenseKey);
+    
+    if (!licenseKey) {
+        console.log('No license key entered');
+        return;
+    }
+    
+    console.log('Validating with EnhancedLicenseSystem...');
+    const validation = EnhancedLicenseSystem.validateLicense(licenseKey);
+    console.log('Validation result:', validation);
+    
+    if (validation.valid) {
+        console.log('✅ License is valid!');
+        console.log('Customer:', validation.data.name);
+        console.log('Expiry:', validation.expiry);
+        console.log('Days remaining:', validation.daysRemaining);
+        console.log('Type:', validation.type);
+    } else {
+        console.log('❌ License is invalid:', validation.error);
+        console.log('Error code:', validation.code);
+    }
+}
+
+// Make debug function available globally
+window.debugLicense = debugLicense;
+
+// Log initialization
+console.log('CA Final Pro Tracker initialized successfully');
+console.log('Device ID:', EnhancedLicenseSystem.getDeviceId());
+console.log('Use debugLicense() in console to test license validation');
+</script>
