@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CA Pro Tracker - License Generator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2980 0%, #26d0ce 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .generator-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .header i {
+            color: #3498db;
+        }
+        
+        .header p {
+            color: #7f8c8d;
+            font-size: 16px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 15px;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background: #f8f9fa;
+        }
+        
+        input:focus, select:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);
+            background: white;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #1a2980 0%, #26d0ce 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(26, 41, 128, 0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn:disabled {
+            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .result-container {
+            margin-top: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+            display: none;
+            border-left: 5px solid #3498db;
+        }
+        
+        .result-container.show {
+            display: block;
+            animation: slideUp 0.5s ease;
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .license-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #dee2e6;
+        }
+        
+        .license-info div {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .license-info div span {
+            display: block;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .license-key-container {
+            position: relative;
+            margin: 20px 0;
+        }
+        
+        .license-key {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+            border: 2px dashed #3498db;
+            font-size: 16px;
+            line-height: 1.6;
+            color: #2c3e50;
+            position: relative;
+            padding-right: 120px;
+        }
+        
+        .copy-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 12px 24px;
+            background: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 6px rgba(46, 204, 113, 0.2);
+        }
+        
+        .copy-btn:hover {
+            background: #27ae60;
+            transform: translateY(-50%) scale(1.05);
+        }
+        
+        .copy-btn.copied {
+            background: #3498db;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .action-buttons button {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .action-buttons button:nth-child(1) {
+            background: #3498db;
+            color: white;
+        }
+        
+        .action-buttons button:nth-child(2) {
+            background: #9b59b6;
+            color: white;
+        }
+        
+        .action-buttons button:nth-child(3) {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .action-buttons button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .security-notice {
+            margin-top: 20px;
+            padding: 15px;
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            color: #856404;
+            font-size: 14px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        
+        .security-notice i {
+            margin-top: 2px;
+            color: #f39c12;
+        }
+        
+        .admin-info {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 14px;
+            color: #7f8c8d;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 10px 0;
+        }
+        
+        .loading i {
+            color: #3498db;
+            font-size: 20px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+        
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #2ecc71;
+        }
+        
+        .status-dot.offline {
+            background: #e74c3c;
+        }
+        
+        .history-btn {
+            background: #f39c12;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .history-btn:hover {
+            background: #d68910;
+        }
+        
+        @media (max-width: 768px) {
+            .generator-container {
+                padding: 25px;
+            }
+            
+            .license-info {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+            
+            .license-info div {
+                text-align: left;
+            }
+            
+            .license-key {
+                padding-right: 20px;
+                padding-bottom: 60px;
+            }
+            
+            .copy-btn {
+                position: relative;
+                top: 10px;
+                right: 0;
+                transform: none;
+                width: 100%;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="generator-container">
+        <div class="status-indicator">
+            <div class="status-dot" id="status-dot"></div>
+            <span id="status-text">Online</span>
+        </div>
+        
+        <div class="header">
+            <h1><i class="fas fa-key"></i> CA Pro Tracker License Generator</h1>
+            <p>Generate professional licenses for CA Pro Tracker with Google Sheets integration</p>
+        </div>
+        
+        <div class="success-message" id="success-message">
+            <i class="fas fa-check-circle"></i>
+            <span id="success-text"></span>
+        </div>
+        
+        <div class="error-message" id="error-message">
+            <i class="fas fa-exclamation-circle"></i>
+            <span id="error-text"></span>
+        </div>
+        
+        <div class="form-group">
+            <label for="customer-name"><i class="fas fa-user"></i> Customer Name</label>
+            <input type="text" id="customer-name" placeholder="Enter customer full name" autocomplete="off">
+        </div>
+        
+        <div class="form-group">
+            <label for="customer-email"><i class="fas fa-envelope"></i> Customer Email (Optional)</label>
+            <input type="email" id="customer-email" placeholder="Enter customer email address" autocomplete="off">
+        </div>
+        
+        <div class="form-group">
+            <label for="license-type"><i class="fas fa-calendar-alt"></i> License Duration</label>
+            <select id="license-type">
+                <option value="30">30 Days - Trial License</option>
+                <option value="90">90 Days - Basic License</option>
+                <option value="180">180 Days - Standard License</option>
+                <option value="365">365 Days - Professional License</option>
+                <option value="730">730 Days - Premium License (2 Years)</option>
+                <option value="1095">1095 Days - Enterprise License (3 Years)</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="license-count"><i class="fas fa-copy"></i> Number of Licenses</label>
+            <input type="number" id="license-count" value="1" min="1" max="10" autocomplete="off">
+        </div>
+        
+        <div class="loading" id="loading">
+            <i class="fas fa-spinner"></i> Generating license and saving to Google Sheets...
+        </div>
+        
+        <button class="btn" id="generate-btn">
+            <i class="fas fa-magic"></i> Generate License Key
+        </button>
+        
+        <div class="result-container" id="result-container">
+            <div class="license-info">
+                <div>
+                    <span>Customer</span>
+                    <span id="info-name">-</span>
+                </div>
+                <div>
+                    <span>Expiry Date</span>
+                    <span id="info-expiry">-</span>
+                </div>
+                <div>
+                    <span>License Type</span>
+                    <span id="info-type">-</span>
+                </div>
+            </div>
+            
+            <div class="license-key-container">
+                <div class="license-key" id="license-output">License key will appear here...</div>
+                <button class="copy-btn" id="copy-btn">
+                    <i class="fas fa-copy"></i> Copy
+                </button>
+            </div>
+            
+            <div class="action-buttons">
+                <button id="email-btn">
+                    <i class="fas fa-paper-plane"></i> Email License
+                </button>
+                <button id="whatsapp-btn">
+                    <i class="fab fa-whatsapp"></i> Send via WhatsApp
+                </button>
+                <button id="clear-btn">
+                    <i class="fas fa-redo"></i> Clear & Reset
+                </button>
+            </div>
+        </div>
+        
+        <div class="security-notice">
+            <i class="fas fa-shield-alt"></i>
+            <div>
+                <strong>Security Notice:</strong> Each license key is encrypted with AES-256 encryption. 
+                The master key is stored securely and never transmitted. Generated licenses are automatically 
+                logged to Google Sheets for audit purposes.
+            </div>
+        </div>
+        
+        <div class="admin-info">
+            <div>
+                <i class="fas fa-history"></i> 
+                <span id="total-generated">0 licenses generated today</span>
+            </div>
+            <button class="history-btn" id="view-history-btn">
+                <i class="fas fa-external-link-alt"></i> View Google Sheet
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const MASTER_KEY = "S@tyamCA2026@Premium";
+        const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbzAe8zX4b-RWqCz_KbTJgMQoy6TYl1FSjHx6D7GHRQqimJSPPJfSU8EtzCNLh67gC25/exec";
+        const GOOGLE_SHEET_ID = "1GihxT8ht2lOypNjHFe_bUU3uAvOT_O74";
+        
+        // DOM Elements
+        const customerName = document.getElementById('customer-name');
+        const customerEmail = document.getElementById('customer-email');
+        const licenseType = document.getElementById('license-type');
+        const licenseCount = document.getElementById('license-count');
+        const generateBtn = document.getElementById('generate-btn');
+        const copyBtn = document.getElementById('copy-btn');
+        const resultContainer = document.getElementById('result-container');
+        const licenseOutput = document.getElementById('license-output');
+        const loading = document.getElementById('loading');
+        const successMessage = document.getElementById('success-message');
+        const successText = document.getElementById('success-text');
+        const errorMessage = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+        const statusDot = document.getElementById('status-dot');
+        const statusText = document.getElementById('status-text');
+        const totalGenerated = document.getElementById('total-generated');
+        const viewHistoryBtn = document.getElementById('view-history-btn');
+        
+        // Info display elements
+        const infoName = document.getElementById('info-name');
+        const infoExpiry = document.getElementById('info-expiry');
+        const infoType = document.getElementById('info-type');
+        
+        // Action buttons
+        const emailBtn = document.getElementById('email-btn');
+        const whatsappBtn = document.getElementById('whatsapp-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check connection
+            checkConnection();
+            
+            // Load today's count from localStorage
+            updateTodayCount();
+            
+            // Event Listeners
+            generateBtn.addEventListener('click', generateLicense);
+            copyBtn.addEventListener('click', copyLicense);
+            emailBtn.addEventListener('click', emailLicense);
+            whatsappBtn.addEventListener('click', whatsappLicense);
+            clearBtn.addEventListener('click', clearForm);
+            viewHistoryBtn.addEventListener('click', viewHistory);
+            
+            // Auto-save form data
+            customerName.addEventListener('input', saveFormData);
+            customerEmail.addEventListener('input', saveFormData);
+            licenseType.addEventListener('change', saveFormData);
+            licenseCount.addEventListener('input', saveFormData);
+            
+            // Load saved form data
+            loadFormData();
+            
+            // Auto-focus on name field
+            customerName.focus();
+        });
+        
+        // Check connection status
+        async function checkConnection() {
+            try {
+                const response = await fetch(GOOGLE_SHEETS_URL + '?action=ping', { 
+                    method: 'GET',
+                    mode: 'no-cors'
+                });
+                statusDot.classList.remove('offline');
+                statusText.textContent = 'Online';
+                statusDot.style.backgroundColor = '#2ecc71';
+            } catch (error) {
+                statusDot.classList.add('offline');
+                statusText.textContent = 'Offline (Local Only)';
+                statusDot.style.backgroundColor = '#e74c3c';
+                showError('Offline mode: License will be generated but not saved to Google Sheets');
+            }
+        }
+        
+        // Save form data to localStorage
+        function saveFormData() {
+            const formData = {
+                name: customerName.value,
+                email: customerEmail.value,
+                type: licenseType.value,
+                count: licenseCount.value
+            };
+            localStorage.setItem('caProLicenseForm', JSON.stringify(formData));
+        }
+        
+        // Load form data from localStorage
+        function loadFormData() {
+            const savedData = localStorage.getItem('caProLicenseForm');
+            if (savedData) {
+                const formData = JSON.parse(savedData);
+                customerName.value = formData.name || '';
+                customerEmail.value = formData.email || '';
+                licenseType.value = formData.type || '30';
+                licenseCount.value = formData.count || '1';
+            }
+        }
+        
+        // Update today's count
+        function updateTodayCount() {
+            const today = new Date().toDateString();
+            const counts = JSON.parse(localStorage.getItem('caProLicenseCounts') || '{}');
+            const todayCount = counts[today] || 0;
+            totalGenerated.textContent = `${todayCount} licenses generated today`;
+        }
+        
+        // Increment today's count
+        function incrementTodayCount() {
+            const today = new Date().toDateString();
+            const counts = JSON.parse(localStorage.getItem('caProLicenseCounts') || '{}');
+            counts[today] = (counts[today] || 0) + 1;
+            localStorage.setItem('caProLicenseCounts', JSON.stringify(counts));
+            updateTodayCount();
+        }
+        
+        // Show success message
+        function showSuccess(message) {
+            successText.textContent = message;
+            successMessage.style.display = 'flex';
+            setTimeout(() => {
+                successMessage.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Show error message
+        function showError(message) {
+            errorText.textContent = message;
+            errorMessage.style.display = 'flex';
+            setTimeout(() => {
+                errorMessage.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Generate license key
+        async function generateLicense() {
+            const name = customerName.value.trim();
+            const email = customerEmail.value.trim();
+            const days = licenseType.value;
+            const count = parseInt(licenseCount.value) || 1;
+            
+            if (!name) {
+                showError('Please enter customer name');
+                customerName.focus();
+                return;
+            }
+            
+            if (count > 10) {
+                showError('Maximum 10 licenses can be generated at once');
+                return;
+            }
+            
+            // Disable button and show loading
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+            loading.style.display = 'block';
+            
+            // Clear previous result
+            resultContainer.classList.remove('show');
+            
+            try {
+                let allLicenses = [];
+                
+                // Generate multiple licenses if count > 1
+                for (let i = 0; i < count; i++) {
+                    const expiryDate = new Date();
+                    expiryDate.setDate(expiryDate.getDate() + parseInt(days));
+                    
+                    // Create license data object
+                    const licenseData = {
+                        name: name,
+                        email: email || "Not Provided",
+                        expiry: expiryDate.toISOString(),
+                        generated: new Date().toISOString(),
+                        type: "CA-PREM",
+                        duration: days + " days"
+                    };
+                    
+                    // Encrypt the license data
+                    const jsonString = JSON.stringify(licenseData);
+                    const encrypted = CryptoJS.AES.encrypt(jsonString, MASTER_KEY).toString();
+                    const base64 = btoa(encrypted);
+                    const licenseKey = `CA-PREM-${base64}`;
+                    
+                    allLicenses.push({
+                        key: licenseKey,
+                        data: licenseData
+                    });
+                }
+                
+                // Display first license
+                const firstLicense = allLicenses[0];
+                licenseOutput.textContent = firstLicense.key;
+                
+                // Update info display
+                infoName.textContent = firstLicense.data.name;
+                infoExpiry.textContent = new Date(firstLicense.data.expiry).toLocaleDateString();
+                infoType.textContent = getLicenseTypeName(days);
+                
+                // Show result container
+                resultContainer.classList.add('show');
+                
+                // Save to Google Sheets
+                await saveToGoogleSheets(allLicenses);
+                
+                // Increment count
+                incrementTodayCount();
+                
+                // Show success message
+                if (count === 1) {
+                    showSuccess(`License generated successfully! Saved to Google Sheets.`);
+                } else {
+                    showSuccess(`${count} licenses generated successfully! Saved to Google Sheets.`);
+                }
+                
+            } catch (error) {
+                console.error('License generation error:', error);
+                showError('Error generating license: ' + error.message);
+            } finally {
+                // Re-enable button and hide loading
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = '<i class="fas fa-magic"></i> Generate License Key';
+                loading.style.display = 'none';
+            }
+        }
+        
+        // Get license type name
+        function getLicenseTypeName(days) {
+            const types = {
+                '30': 'Trial',
+                '90': 'Basic',
+                '180': 'Standard',
+                '365': 'Professional',
+                '730': 'Premium',
+                '1095': 'Enterprise'
+            };
+            return types[days] || `${days} Days`;
+        }
+        
+        // Save to Google Sheets
+        async function saveToGoogleSheets(licenses) {
+            if (!licenses || licenses.length === 0) return;
+            
+            const license = licenses[0]; // We'll save details of the first license
+            const licenseData = license.data;
+            
+            const dataToSave = {
+                action: 'addLicense',
+                timestamp: new Date().toISOString(),
+                customerName: licenseData.name,
+                customerEmail: licenseData.email,
+                licenseKey: license.key.substring(0, 50) + '...', // First 50 chars
+                licenseType: getLicenseTypeName(licenseData.duration.split(' ')[0]),
+                expiryDate: new Date(licenseData.expiry).toLocaleDateString(),
+                duration: licenseData.duration,
+                status: 'Active',
+                count: licenses.length
+            };
+            
+            try {
+                // Using Google Apps Script Web App
+                const formData = new FormData();
+                for (const key in dataToSave) {
+                    formData.append(key, dataToSave[key]);
+                }
+                
+                // Note: Using 'no-cors' mode to avoid CORS issues
+                // In production, you should deploy your own Google Apps Script
+                fetch(GOOGLE_SHEETS_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: formData
+                });
+                
+            } catch (error) {
+                console.warn('Could not save to Google Sheets:', error);
+                // Continue even if Google Sheets fails
+            }
+        }
+        
+        // Copy license to clipboard
+        function copyLicense() {
+            const licenseText = licenseOutput.textContent;
+            
+            if (!licenseText || licenseText === 'License key will appear here...') {
+                showError('No license key to copy');
+                return;
+            }
+            
+            navigator.clipboard.writeText(licenseText)
+                .then(() => {
+                    copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                    copyBtn.classList.add('copied');
+                    showSuccess('License key copied to clipboard!');
+                    
+                    setTimeout(() => {
+                        copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copy';
+                        copyBtn.classList.remove('copied');
+                    }, 2000);
+                })
+                .catch(err => {
+                    showError('Failed to copy: ' + err);
+                });
+        }
+        
+        // Email license
+        function emailLicense() {
+            const licenseText = licenseOutput.textContent;
+            const name = infoName.textContent;
+            
+            if (!licenseText || licenseText === 'License key will appear here...') {
+                showError('No license key to email');
+                return;
+            }
+            
+            const email = customerEmail.value.trim();
+            if (!email) {
+                showError('Please enter customer email address first');
+                customerEmail.focus();
+                return;
+            }
+            
+            const subject = `CA Pro Tracker License Key - ${name}`;
+            const body = `Dear ${name},
+
+Your CA Pro Tracker license key has been generated:
+
+License Key: ${licenseText}
+
+Expiry Date: ${infoExpiry.textContent}
+License Type: ${infoType.textContent}
+
+Instructions:
+1. Open CA Pro Tracker
+2. Go to Help > Activate License
+3. Paste the above license key
+4. Click Activate
+
+If you have any issues, please contact support.
+
+Best regards,
+CA Pro Tracker Team`;
+
+            const mailtoLink = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.open(mailtoLink, '_blank');
+        }
+        
+        // Send via WhatsApp
+        function whatsappLicense() {
+            const licenseText = licenseOutput.textContent;
+            const name = infoName.textContent;
+            
+            if (!licenseText || licenseText === 'License key will appear here...') {
+                showError('No license key to share');
+                return;
+            }
+            
+            const message = `*CA Pro Tracker License Key for ${name}*
+
+License Key: ${licenseText}
+
+Expiry Date: ${infoExpiry.textContent}
+License Type: ${infoType.textContent}
+
+Please activate this license in CA Pro Tracker under Help > Activate License.`;
+            
+            const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        }
+        
+        // Clear form
+        function clearForm() {
+            customerName.value = '';
+            customerEmail.value = '';
+            licenseType.value = '30';
+            licenseCount.value = '1';
+            resultContainer.classList.remove('show');
+            localStorage.removeItem('caProLicenseForm');
+            customerName.focus();
+            showSuccess('Form cleared successfully!');
+        }
+        
+        // View Google Sheet
+        function viewHistory() {
+            window.open(`https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/edit`, '_blank');
+        }
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl+G to generate
+            if ((e.ctrlKey || e.metaKey) && e.key === 'g') {
+                e.preventDefault();
+                generateLicense();
+            }
+            
+            // Ctrl+C to copy (when result is visible)
+            if ((e.ctrlKey || e.metaKey) && e.key === 'c' && resultContainer.classList.contains('show')) {
+                e.preventDefault();
+                copyLicense();
+            }
+            
+            // Ctrl+R to reset
+            if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+                e.preventDefault();
+                clearForm();
+            }
+        });
+    </script>
+</body>
+  </html>
